@@ -1339,7 +1339,127 @@
             updateMoodIndicator();
             updateStats();
             setupEventListeners();
-            document.getElementById('questionText').classList.add('show');
+        }
+
+        // Advanced randomization functions for better unpredictability
+        function seededRandom(seed) {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function fisherYatesShuffle(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                // Use multiple random sources for better unpredictability
+                const randomSource1 = Math.random();
+                const randomSource2 = seededRandom(Date.now() + i);
+                const randomSource3 = seededRandom(performance.now() * randomSource1);
+
+                // Combine multiple random sources
+                const combinedRandom = (randomSource1 + randomSource2 + randomSource3) % 1;
+                const j = Math.floor(combinedRandom * (i + 1));
+
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function weightedRandomSelection(items, weights) {
+            const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+            let random = Math.random() * totalWeight;
+
+            for (let i = 0; i < items.length; i++) {
+                random -= weights[i];
+                if (random <= 0) {
+                    return items[i];
+                }
+            }
+            return items[items.length - 1];
+        }
+
+        function createUnpredictablePool(filteredQuestions) {
+            // Group questions by category/difficulty/mood for better distribution
+            const groups = {};
+            filteredQuestions.forEach(q => {
+                const groupKey = `${q.category}-${q.difficulty}-${q.mood}`;
+                if (!groups[groupKey]) groups[groupKey] = [];
+                groups[groupKey].push(q);
+            });
+
+            // Shuffle each group independently
+            Object.keys(groups).forEach(key => {
+                groups[key] = fisherYatesShuffle(groups[key]);
+            });
+
+            // Create weighted distribution to avoid clustering
+            const pooledQuestions = [];
+            const groupKeys = Object.keys(groups);
+            const maxGroupSize = Math.max(...Object.values(groups).map(g => g.length));
+
+            // Interleave questions from different groups
+            for (let i = 0; i < maxGroupSize; i++) {
+                const shuffledKeys = fisherYatesShuffle(groupKeys);
+                shuffledKeys.forEach(key => {
+                    if (groups[key][i]) {
+                        pooledQuestions.push(groups[key][i]);
+                    }
+                });
+            }
+
+            return fisherYatesShuffle(pooledQuestions);
+        }
+
+        function selectRandomQuestion(availableQuestions) {
+            if (availableQuestions.length === 0) return null;
+
+            // Create multiple selection methods for unpredictability
+            const selectionMethods = [
+                // Method 1: Pure random with time-based seed
+                () => {
+                    const timeBasedIndex = Math.floor(seededRandom(Date.now()) * availableQuestions.length);
+                    return availableQuestions[timeBasedIndex];
+                },
+
+                // Method 2: Weighted selection favoring less recent categories
+                () => {
+                    const categoryFrequency = {};
+                    const recentQuestions = questionHistory.slice(-5); // Last 5 questions
+
+                    recentQuestions.forEach(q => {
+                        categoryFrequency[q.category] = (categoryFrequency[q.category] || 0) + 1;
+                    });
+
+                    const weights = availableQuestions.map(q => {
+                        const freq = categoryFrequency[q.category] || 0;
+                        return Math.max(0.1, 1 - (freq * 0.3)); // Lower weight for recent categories
+                    });
+
+                    return weightedRandomSelection(availableQuestions, weights);
+                },
+
+                // Method 3: Anti-pattern selection
+                () => {
+                    if (questionHistory.length < 2) {
+                        return availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+                    }
+
+                    const lastQuestion = questionHistory[questionHistory.length - 1];
+                    const secondLastQuestion = questionHistory[questionHistory.length - 2];
+
+                    // Avoid same category and difficulty combo as last two
+                    const filtered = availableQuestions.filter(q =>
+                        !(q.category === lastQuestion.category && q.difficulty === lastQuestion.difficulty) &&
+                        !(q.category === secondLastQuestion.category && q.difficulty === secondLastQuestion.difficulty)
+                    );
+
+                    const questionsToUse = filtered.length > 0 ? filtered : availableQuestions;
+                    return questionsToUse[Math.floor(Math.random() * questionsToUse.length)];
+                }
+            ];
+
+            // Randomly choose selection method
+            const methodIndex = Math.floor(Math.random() * selectionMethods.length);
+            return selectionMethods[methodIndex]();
         }
 
         // Event listeners
@@ -1422,7 +1542,23 @@
 
             // Hide current question
             questionText.classList.remove('show');
-            questionText.innerHTML = '<div class="loading">Mencari pertanyaan yang pas...</div>';
+
+            // Add variety to loading messages for unpredictability
+            const loadingMessages = [
+                'Mencari pertanyaan yang pas...',
+                'Memilih pertanyaan menarik...',
+                'Meracik pertanyaan seru...',
+                'Menyiapkan pertanyaan bagus...',
+                'Mengocok database pertanyaan...',
+                'Mencari surprize untuk kamu...'
+            ];
+            const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+            questionText.innerHTML = `<div class="loading">${randomMessage}</div>`;
+
+            // Variable delay for unpredictability (500ms to 1200ms)
+            const minDelay = 500;
+            const maxDelay = 1200;
+            const randomDelay = minDelay + Math.random() * (maxDelay - minDelay);
 
             setTimeout(() => {
                 const filteredQuestions = getFilteredQuestions();
@@ -1435,19 +1571,50 @@
                     return;
                 }
 
-                // Reset used questions if all have been seen
-                const availableQuestions = filteredQuestions.filter(q =>
+                // Create unpredictable pool of questions
+                const unpredictablePool = createUnpredictablePool(filteredQuestions);
+
+                // Reset used questions if all have been seen, but with randomization
+                const availableQuestions = unpredictablePool.filter(q =>
                     !usedQuestions.has(`${q.category}-${q.difficulty}-${q.mood}-${q.text}`)
                 );
 
-                const questionsToUse = availableQuestions.length > 0 ? availableQuestions : filteredQuestions;
-
+                let questionsToUse;
                 if (availableQuestions.length === 0) {
-                    usedQuestions.clear();
+                    // Reset but keep some unpredictability by not clearing all at once
+                    const usedArray = Array.from(usedQuestions);
+                    const keepPercentage = 0.2; // Keep 20% of used questions for better randomness
+                    const keepCount = Math.floor(usedArray.length * keepPercentage);
+
+                    if (keepCount > 0) {
+                        const shuffledUsed = fisherYatesShuffle(usedArray);
+                        const questionsToKeep = shuffledUsed.slice(0, keepCount);
+
+                        usedQuestions.clear();
+                        questionsToKeep.forEach(q => usedQuestions.add(q));
+
+                        questionsToUse = unpredictablePool.filter(q =>
+                            !usedQuestions.has(`${q.category}-${q.difficulty}-${q.mood}-${q.text}`)
+                        );
+                    } else {
+                        usedQuestions.clear();
+                        questionsToUse = unpredictablePool;
+                    }
+                } else {
+                    questionsToUse = availableQuestions;
                 }
 
-                // Pick random question
-                const randomQuestion = questionsToUse[Math.floor(Math.random() * questionsToUse.length)];
+                // Select question using advanced randomization
+                const randomQuestion = selectRandomQuestion(questionsToUse);
+
+                if (!randomQuestion) {
+                    questionText.innerHTML = 'Tidak ada pertanyaan yang tersedia. Coba reset filter!';
+                    questionText.classList.add('show');
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄 Pertanyaan Baru';
+                    return;
+                }
+
                 const questionKey = `${randomQuestion.category}-${randomQuestion.difficulty}-${randomQuestion.mood}-${randomQuestion.text}`;
 
                 usedQuestions.add(questionKey);
@@ -1458,7 +1625,7 @@
                 displayQuestion(randomQuestion);
                 updateStats();
 
-                // Add pulse effect
+                // Add pulse effect with random intensity
                 container.classList.add('pulse');
                 setTimeout(() => container.classList.remove('pulse'), 600);
 
@@ -1467,7 +1634,7 @@
                 btn.innerHTML = '🔄 Pertanyaan Baru';
                 document.getElementById('prevBtn').disabled = questionHistory.length <= 1;
 
-            }, 800);
+            }, randomDelay);
         }
 
         // Display question
