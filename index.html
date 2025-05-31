@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Pertanyaan Acak - Smart Questions</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #3b82f6;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-accent: #ffffff;
+            --border-color: #e2e8f0;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            background: var(--surface-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .select-container {
+            position: relative;
+        }
+
+        .custom-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--surface-color);
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        .custom-select:hover {
+            border-color: var(--accent-color);
+        }
+
+        .custom-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        /* Question Container */
+        .question-container {
+            background: var(--surface-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .question-meta {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .question-category {
+            background: var(--primary-color);
+            color: var(--text-accent);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .question-difficulty {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .difficulty-easy {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .difficulty-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .difficulty-hard {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .question-counter {
+            background: var(--accent-color);
+            color: var(--text-accent);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .question-text {
+            font-size: clamp(1.3rem, 4vw, 1.9rem);
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            margin-top: 2rem;
+        }
+
+        .question-text.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading {
+            color: var(--accent-color);
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        /* Buttons */
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--text-accent);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--surface-color);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background-color);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.8s both;
+        }
+
+        .stat-item {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Mood Indicator */
+        .mood-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--surface-color);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            animation: fadeInUp 0.8s ease-out 1s both;
+        }
+
+        .mood-emoji {
+            font-size: 2rem;
+        }
+
+        .mood-text {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 0.6s ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 15px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .question-container {
+                padding: 1.5rem;
+                min-height: 150px;
+            }
+
+            .question-meta {
+                position: static;
+                margin-bottom: 1rem;
+                justify-content: center;
+            }
+
+            .question-text {
+                margin-top: 0;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .stat-item {
+                padding: 1rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .question-container {
+                padding: 1rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .mood-indicator {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>🎲 Smart Question Game</h1>
+            <p>Pertanyaan cerdas untuk percakapan seru berdasarkan kategori, tingkat kesulitan, dan mood kamu!</p>
+        </header>
+
+        <div class="settings-panel">
+            <div class="settings-grid">
+                <div class="setting-group">
+                    <label class="setting-label">
+                        🎯 Kategori Pertanyaan
+                    </label>
+                    <select class="custom-select" id="categorySelect">
+                        <option value="all">Semua Kategori</option>
+                        <option value="friendship">🤝 Pertemanan</option>
+                        <option value="love">💕 Cinta & Romansa</option>
+                        <option value="career">💼 Karir & Ambisi</option>
+                        <option value="lifestyle">🌟 Gaya Hidup</option>
+                        <option value="entertainment">🎬 Hiburan</option>
+                        <option value="personal">🧠 Pengembangan Diri</option>
+                        <option value="fun">🎉 Fun & Random</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">
+                        ⭐ Tingkat Kesulitan
+                    </label>
+                    <select class="custom-select" id="difficultySelect">
+                        <option value="all">Semua Level</option>
+                        <option value="easy">😊 Mudah</option>
+                        <option value="medium">🤔 Sedang</option>
+                        <option value="hard">🧐 Sulit</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">
+                        😊 Mood Saat Ini
+                    </label>
+                    <select class="custom-select" id="moodSelect">
+                        <option value="all">Semua Mood</option>
+                        <option value="happy">😄 Senang & Antusias</option>
+                        <option value="thoughtful">🤔 Reflektif & Serius</option>
+                        <option value="curious">🤓 Penasaran & Ingin Tahu</option>
+                        <option value="nostalgic">🥰 Nostalgia & Kenangan</option>
+                        <option value="adventurous">🚀 Petualangan & Mimpi</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mood-indicator" id="moodIndicator">
+            <span class="mood-emoji" id="moodEmoji">🎲</span>
+            <span class="mood-text" id="moodText">Siap untuk pertanyaan seru?</span>
+        </div>
+
+        <div class="question-container" id="questionContainer">
+            <div class="question-meta">
+                <div class="question-category" id="questionCategory">Umum</div>
+                <div class="question-difficulty difficulty-easy" id="questionDifficulty">Mudah</div>
+                <div class="question-counter" id="questionCounter">0 / 0</div>
+            </div>
+            <div class="question-text" id="questionText">
+                Pilih kategori, tingkat kesulitan, dan mood kamu, lalu klik tombol di bawah untuk memulai!
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button class="btn btn-primary" onclick="getNewQuestion()" id="newQuestionBtn">
+                🔄 Pertanyaan Baru
+            </button>
+            <button class="btn btn-secondary" onclick="showPreviousQuestion()" id="prevBtn" disabled>
+                ⬅️ Sebelumnya
+            </button>
+            <button class="btn btn-secondary" onclick="resetFilters()" id="resetBtn">
+                🔄 Reset Filter
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalQuestions">0</span>
+                <span class="stat-label">Total Tersedia</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="questionsSeen">0</span>
+                <span class="stat-label">Sudah Dilihat</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="remainingQuestions">0</span>
+                <span class="stat-label">Tersisa</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="currentStreak">0</span>
+                <span class="stat-label">Streak Hari Ini</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive Question Database - Combined from external files
+        const questionDatabase = {
+            friendship: {
+                easy: {
+                    happy: [
+                        "Siapa teman yang selalu bikin kamu ketawa?",
+                        "Apa hal paling lucu yang pernah kamu lakukan bareng teman?",
+                        "Teman mana yang paling bisa bikin mood kamu bagus?",
+                        "Apa tradisi unik yang kamu punya sama teman-teman?",
+                        "Siapa teman yang paling sering chat sama kamu?",
+                        "Apa makanan yang selalu kamu share sama teman?",
+                        "Teman mana yang paling cocok jadi partner crime kamu?",
+                        "Apa game yang paling seru dimain bareng teman?",
+                        "Siapa teman yang paling bisa dipercaya buat nyimpen rahasia?",
+                        "Apa momen paling epic bareng squad kamu?"
+                    ],
+                    thoughtful: [
+                        "Apa kualitas terpenting yang kamu cari dalam teman?",
+                        "Siapa teman yang paling mempengaruhi hidup kamu?",
+                        "Apa arti persahabatan yang sesungguhnya menurutmu?",
+                        "Bagaimana cara kamu menunjukkan kalau kamu peduli sama teman?",
+                        "Apa yang membuat persahabatan jadi bermakna?",
+                        "Siapa teman yang paling mengajarkan kamu tentang kehidupan?",
+                        "Apa nilai yang paling penting dalam persahabatan?",
+                        "Bagaimana cara kamu memilih teman yang tepat?",
+                        "Apa yang kamu lakukan ketika teman sedang down?",
+                        "Siapa teman yang paling mengerti kepribadian kamu?"
+                    ],
+                    curious: [
+                        "Gimana cara kamu biasanya kenalan sama orang baru?",
+                        "Apa yang bikin kamu langsung nyaman sama seseorang?",
+                        "Apa first impression yang biasanya orang punya tentang kamu?",
+                        "Gimana cara kamu tau kalau seseorang bisa jadi teman baik?",
+                        "Apa topik yang paling sering kamu bahas sama teman?",
+                        "Bagaimana cara kamu maintain friendship jarak jauh?",
+                        "Apa yang bikin kamu tertarik berteman dengan seseorang?",
+                        "Gimana cara kamu handle teman yang toxic?",
+                        "Apa red flag dalam persahabatan menurutmu?",
+                        "Bagaimana cara kamu approach orang yang pemalu?"
+                    ],
+                    nostalgic: [
+                        "Cerita tentang teman masa kecil yang paling berkesan!",
+                        "Apa kenangan paling indah bareng sahabat kamu?",
+                        "Mainan apa yang paling sering kamu main bareng teman waktu kecil?",
+                        "Tempat nongkrong favorit kamu sama teman-teman dulu?",
+                        "Apa lagu yang selalu ngingetin kamu sama sahabat?",
+                        "Cerita tentang sleepover paling seru yang pernah kamu alami!",
+                        "Apa tradisi masa kecil yang masih kamu kangen?",
+                        "Siapa teman SD/SMP yang paling kamu rindukan?",
+                        "Apa permainan tradisional yang sering kamu main bareng?",
+                        "Cerita tentang guru yang paling berkesan di sekolah!"
+                    ],
+                    adventurous: [
+                        "Apa petualangan yang ingin kamu lakuin bareng teman?",
+                        "Kalau bisa traveling bareng siapa aja, pilih siapa?",
+                        "Destinasi mana yang pengen kamu explore bareng squad?",
+                        "Apa aktivitas extreme yang pengen kamu coba bareng teman?",
+                        "Kalau bisa road trip ke mana aja, kemana kamu mau pergi?",
+                        "Apa bucket list yang pengen kamu selesaikan bareng sahabat?",
+                        "Festival atau event apa yang pengen kamu datangi bareng?",
+                        "Kalau bisa backpacking, negara mana yang jadi target?",
+                        "Apa challenge seru yang pengen kamu lakukan bareng teman?",
+                        "Kalau bisa camping di mana aja, lokasi mana yang kamu pilih?"
+                    ]
+                },
+                medium: {
+                    happy: [
+                        "Apa hal yang paling kamu syukuri dari persahabatan kamu saat ini?",
+                        "Bagaimana teman-teman mengubah hidup kamu jadi lebih baik?",
+                        "Apa momen terlucu yang bikin kamu dan teman ketawa sampai sakit perut?",
+                        "Siapa teman yang paling supportive dalam pencapaian kamu?",
+                        "Apa inside joke yang cuma kamu dan teman yang ngerti?",
+                        "Bagaimana cara kamu celebrate achievement bareng teman?",
+                        "Apa hal paling random yang pernah kamu lakukan spontan bareng teman?",
+                        "Siapa teman yang paling bisa bikin kamu confident?",
+                        "Apa tradisi ulang tahun yang paling berkesan bareng teman?",
+                        "Bagaimana teman-teman membantu kamu keluar dari comfort zone?"
+                    ],
+                    thoughtful: [
+                        "Bagaimana cara kamu mempertahankan persahabatan jarak jauh?",
+                        "Kapan terakhir kali kamu memaafkan teman yang menyakiti kamu?",
+                        "Apa yang membuat persahabatan bertahan lama menurutmu?",
+                        "Bagaimana cara kamu balance antara me time dan friend time?",
+                        "Apa sacrifice terbesar yang pernah kamu lakukan untuk teman?",
+                        "Bagaimana cara kamu support teman yang sedang struggle?",
+                        "Apa pelajaran terbesar yang kamu dapat dari persahabatan?",
+                        "Bagaimana cara kamu handle jealousy dalam persahabatan?",
+                        "Apa yang kamu lakukan ketika teman mulai berubah?",
+                        "Bagaimana cara kamu set boundaries dalam persahabatan?"
+                    ],
+                    curious: [
+                        "Apa yang membuat persahabatan bertahan lama menurutmu?",
+                        "Bagaimana cara kamu mengatasi konflik dengan teman dekat?",
+                        "Apa yang kamu lakukan ketika teman punya masalah yang sama?",
+                        "Bagaimana cara kamu handle drama dalam friend group?",
+                        "Apa yang bikin kamu merasa disconnected dari teman lama?",
+                        "Bagaimana cara kamu rebuild trust setelah dikhianati teman?",
+                        "Apa yang kamu lakukan ketika teman mulai toxic?",
+                        "Bagaimana cara kamu approach teman yang lagi avoid kamu?",
+                        "Apa yang bikin persahabatan jadi awkward menurutmu?",
+                        "Bagaimana cara kamu maintain friendship sambil sibuk kerja/kuliah?"
+                    ],
+                    nostalgic: [
+                        "Teman masa kecil mana yang paling kamu rindukan?",
+                        "Cerita tentang persahabatan yang berubah seiring waktu!",
+                        "Apa momen yang bikin kamu sadar kalau teman itu penting?",
+                        "Cerita tentang reunion yang paling berkesan!",
+                        "Apa yang paling kamu kangen dari persahabatan masa lalu?",
+                        "Siapa teman yang hilang kontak tapi masih kamu inget?",
+                        "Apa tradisi persahabatan yang udah ga bisa dilakukan lagi?",
+                        "Cerita tentang teman yang comeback setelah lama ga ketemu!",
+                        "Apa yang berubah dari cara kamu berteman dulu vs sekarang?",
+                        "Siapa teman yang paling berpengaruh di masa remaja kamu?"
+                    ],
+                    adventurous: [
+                        "Kalau bisa memulai bisnis bareng teman, bisnis apa yang kamu pilih?",
+                        "Apa project kreatif yang pengen kamu kerjakan bareng sahabat?",
+                        "Kalau bisa tinggal di satu rumah bareng best friend, kamu mau?",
+                        "Apa skill yang pengen kamu pelajari bareng teman?",
+                        "Kalau bisa bikin komunitas, tema apa yang kamu pilih?",
+                        "Apa volunteer work yang pengen kamu lakukan bareng teman?",
+                        "Kalau bisa collab dengan teman buat content, platform apa yang dipilih?",
+                        "Apa startup idea yang pengen kamu develop bareng squad?",
+                        "Kalau bisa organize event besar, event apa yang kamu buat?",
+                        "Apa social movement yang pengen kamu mulai bareng teman?"
+                    ]
+                },
+                hard: {
+                    thoughtful: [
+                        "Pernahkah kamu kehilangan sahabat karena perbedaan prinsip? Ceritakan!",
+                        "Bagaimana cara kamu membedakan teman sejati dengan teman biasa?",
+                        "Apa yang akan kamu lakukan jika sahabat melakukan sesuatu yang illegal?",
+                        "Bagaimana cara kamu handle ketika sahabat dan pasangan ga suka satu sama lain?",
+                        "Apa yang kamu lakukan ketika harus memilih antara dua sahabat yang konflik?",
+                        "Bagaimana cara kamu forgive teman yang betray kepercayaan kamu?",
+                        "Apa yang membuat kamu rela mengakhiri persahabatan lama?",
+                        "Bagaimana cara kamu handle ketika sahabat jadi successful sementara kamu struggle?",
+                        "Apa yang kamu lakukan ketika sahabat butuh bantuan tapi kamu ga mampu?",
+                        "Bagaimana cara kamu maintain persahabatan ketika hidup udah beda jalur?"
+                    ],
+                    curious: [
+                        "Apa yang akan kamu lakukan jika sahabat kamu melakukan sesuatu yang bertentangan dengan nilai kamu?",
+                        "Bagaimana cara kamu handle ketika sahabat toxic tapi susah dilepas?",
+                        "Apa yang kamu lakukan ketika sahabat selalu compete sama kamu?",
+                        "Bagaimana cara kamu respond ketika sahabat constantly drain energy kamu?",
+                        "Apa yang kamu lakukan ketika sahabat ga support impian kamu?",
+                        "Bagaimana cara kamu handle ketika sahabat spread rumor tentang kamu?",
+                        "Apa yang kamu lakukan ketika sahabat manipulatif?",
+                        "Bagaimana cara kamu set boundaries dengan sahabat yang possessive?",
+                        "Apa yang kamu lakukan ketika sahabat constantly borrow money?",
+                        "Bagaimana cara kamu handle ketika sahabat dating ex kamu?"
+                    ],
+                    nostalgic: [
+                        "Persahabatan mana yang paling kamu sesali hilang dan kenapa?",
+                        "Apa mistake terbesar yang pernah kamu buat dalam persahabatan?",
+                        "Cerita tentang sahabat yang berubah drastis dan bikin kamu sedih!",
+                        "Apa yang akan kamu katakan ke sahabat yang udah ga contact lagi?",
+                        "Persahabatan mana yang berakhir dengan cara paling menyakitkan?",
+                        "Apa yang paling kamu sesali ga pernah bilang ke sahabat?",
+                        "Cerita tentang persahabatan yang ended karena misunderstanding!",
+                        "Apa yang akan kamu ubah dari cara kamu treat sahabat di masa lalu?",
+                        "Siapa sahabat yang paling kamu disappointed dan kenapa?",
+                        "Apa closure yang masih kamu butuhin dari persahabatan masa lalu?"
+                    ],
+                    adventurous: [
+                        "Kalau harus memilih antara karir impian atau tetap dekat dengan sahabat, kamu pilih mana?",
+                        "Apakah kamu rela pindah ke negara lain dan ninggalin semua sahabat?",
+                        "Kalau sahabat ajak kamu quit job dan start business bareng, kamu mau?",
+                        "Apakah kamu rela sacrifice relationship romantic demi persahabatan?",
+                        "Kalau sahabat butuh organ donor dan cuma kamu yang compatible, kamu mau?",
+                        "Apakah kamu rela bohong ke authorities buat protect sahabat?",
+                        "Kalau harus pilih save sahabat atau save stranger, kamu pilih siapa?",
+                        "Apakah kamu rela spend life savings buat help sahabat yang desperate?",
+                        "Kalau sahabat minta kamu jadi guarantor hutang besar, kamu mau?",
+                        "Apakah kamu rela take blame buat mistake yang sahabat buat?"
+                    ]
+                }
+            },
+
+            love: {
+                easy: {
+                    happy: [
+                        "Apa hal paling romantis yang pernah seseorang lakukan buat kamu?",
+                        "Gimana perasaan kamu waktu pertama kali jatuh cinta?",
+                        "Apa love language kamu yang paling dominan?",
+                        "Siapa celebrity crush kamu dari dulu sampai sekarang?",
+                        "Apa lagu yang paling romantis menurutmu?",
+                        "Gimana cara kamu express love ke orang yang kamu sayang?",
+                        "Apa gesture kecil yang bikin kamu melt?",
+                        "Siapa couple goals yang paling kamu admire?",
+                        "Apa pickup line paling cheesy yang pernah kamu denger?",
+                        "Gimana reaksi kamu waktu pertama kali ada yang confess?"
+                    ],
+                    thoughtful: [
+                        "Apa arti cinta yang sesungguhnya menurutmu?",
+                        "Kualitas apa yang paling penting dalam pasangan?",
+                        "Bagaimana cara kamu tau kalau kamu bener-bener cinta sama seseorang?",
+                        "Apa perbedaan antara cinta dan obsesi menurutmu?",
+                        "Bagaimana cara kamu maintain cinta dalam jangka panjang?",
+                        "Apa role cinta dalam hidup kamu?",
+                        "Bagaimana cara kamu balance antara cinta dan self-love?",
+                        "Apa yang membuat cinta jadi unconditional?",
+                        "Bagaimana cara kamu show appreciation ke pasangan?",
+                        "Apa foundation terpenting dalam relationship?"
+                    ],
+                    curious: [
+                        "Apa tanda-tanda kalau kamu lagi jatuh cinta?",
+                        "Gimana cara kamu tau kalau seseorang itu 'the one'?",
+                        "Apa red flag yang langsung bikin kamu turn off?",
+                        "Gimana cara kamu approach someone yang kamu suka?",
+                        "Apa yang bikin kamu attracted ke seseorang?",
+                        "Bagaimana cara kamu flirt yang natural?",
+                        "Apa yang kamu cari dari dating apps?",
+                        "Gimana cara kamu tau kalau seseorang interested sama kamu?",
+                        "Apa dealbreaker utama kamu dalam dating?",
+                        "Bagaimana cara kamu handle rejection?"
+                    ],
+                    nostalgic: [
+                        "Cerita tentang crush pertama kamu!",
+                        "Lagu apa yang selalu ngingetin kamu sama seseorang?",
+                        "Apa kenangan paling manis dari relationship pertama?",
+                        "Siapa first love kamu dan gimana ceritanya?",
+                        "Apa momen paling romantic yang pernah kamu alami?",
+                        "Cerita tentang valentine paling berkesan!",
+                        "Apa gift paling meaningful yang pernah kamu terima?",
+                        "Siapa yang ngajarin kamu tentang cinta pertama kali?",
+                        "Apa film/buku yang bikin kamu percaya sama true love?",
+                        "Cerita tentang first kiss yang awkward tapi sweet!"
+                    ],
+                    adventurous: [
+                        "Kalau bisa date di mana aja, kamu mau date di mana?",
+                        "Apa rencana romantis paling gila yang pernah terlintas di pikiran kamu?",
+                        "Kalau bisa propose di lokasi manapun, kamu pilih dimana?",
+                        "Apa bucket list romantic yang pengen kamu achieve?",
+                        "Kalau bisa recreate scene romantic dari film, scene apa yang dipilih?",
+                        "Apa adventure yang pengen kamu lakukan bareng pasangan?",
+                        "Kalau bisa surprise pasangan dengan cara apapun, kamu mau gimana?",
+                        "Apa fantasy date yang paling unrealistic tapi pengen banget?",
+                        "Kalau bisa time travel buat date, era mana yang dipilih?",
+                        "Apa romantic gesture yang pengen kamu lakukan tapi belum kesampaian?"
+                    ]
+                },
+                medium: {
+                    happy: [
+                        "Bagaimana cara kamu menunjukkan kasih sayang ke orang yang kamu cintai?",
+                        "Apa momen yang bikin kamu realize kalau kamu udah deep in love?",
+                        "Bagaimana cara kamu celebrate anniversary atau milestone relationship?",
+                        "Apa hal kecil yang dilakukan pasangan yang bikin kamu happy?",
+                        "Bagaimana cara kamu support pasangan dalam bad days?",
+                        "Apa tradition romantic yang pengen kamu mulai dengan pasangan?",
+                        "Bagaimana cara kamu keep romance alive dalam long term relationship?",
+                        "Apa surprise terbaik yang pernah kamu kasih ke pasangan?",
+                        "Bagaimana cara kamu handle long distance relationship?",
+                        "Apa yang bikin kamu grateful dalam relationship saat ini?"
+                    ],
+                    thoughtful: [
+                        "Apa yang lebih penting: mencintai atau dicintai? Kenapa?",
+                        "Bagaimana cara kamu menyeimbangkan cinta dan karir?",
+                        "Apa sacrifice yang rela kamu lakukan demi cinta?",
+                        "Bagaimana cara kamu handle perbedaan values dengan pasangan?",
+                        "Apa yang kamu lakukan ketika cinta mulai fade?",
+                        "Bagaimana cara kamu maintain individuality dalam relationship?",
+                        "Apa yang membuat relationship worth fighting for?",
+                        "Bagaimana cara kamu handle ketika pasangan berubah?",
+                        "Apa role communication dalam relationship menurutmu?",
+                        "Bagaimana cara kamu build trust dalam relationship?"
+                    ],
+                    curious: [
+                        "Apa dealbreaker utama kamu dalam hubungan?",
+                        "Bagaimana cara kamu mengatasi rasa cemburu?",
+                        "Apa yang kamu lakukan ketika pasangan punya bad habit?",
+                        "Bagaimana cara kamu handle conflict dalam relationship?",
+                        "Apa yang bikin kamu consider break up dengan seseorang?",
+                        "Bagaimana cara kamu know when to fight for relationship vs when to let go?",
+                        "Apa yang kamu lakukan ketika pasangan ga supportive sama goals kamu?",
+                        "Bagaimana cara kamu handle ketika pasangan close sama ex?",
+                        "Apa yang kamu lakukan ketika feeling disconnected dari pasangan?",
+                        "Bagaimana cara kamu rebuild relationship setelah big fight?"
+                    ],
+                    nostalgic: [
+                        "Hubungan mana yang paling mengajarkan kamu tentang cinta?",
+                        "Apa pelajaran cinta terbesar yang kamu dapat dari orangtua?",
+                        "Cerita tentang relationship yang ended in good terms!",
+                        "Apa yang paling kamu miss dari being single?",
+                        "Siapa ex yang masih kamu appreciate sebagai person?",
+                        "Apa tradition family tentang love yang kamu pengen continue?",
+                        "Cerita tentang couple elderly yang inspire kamu!",
+                        "Apa advice tentang cinta terbaik yang pernah kamu terima?",
+                        "Siapa role model relationship yang kamu look up to?",
+                        "Apa yang berubah dari cara kamu love seiring bertambah umur?"
+                    ],
+                    adventurous: [
+                        "Kalau bisa menikah di mana aja, kamu pilih di mana?",
+                        "Rencana honeymoon impian kamu seperti apa?",
+                        "Apa romantic adventure yang pengen kamu lakukan sebelum settle down?",
+                        "Kalau bisa live anywhere dengan pasangan, negara mana yang dipilih?",
+                        "Apa business yang pengen kamu start bareng pasangan?",
+                        "Kalau bisa adopt lifestyle apapun bareng pasangan, lifestyle apa yang dipilih?",
+                        "Apa project kreatif yang pengen kamu kerjakan bareng significant other?",
+                        "Kalau bisa experience love di era manapun, era mana yang dipilih?",
+                        "Apa challenge yang pengen kamu overcome bareng pasangan?",
+                        "Kalau bisa create perfect romantic getaway, seperti apa konsepnya?"
+                    ]
+                },
+                hard: {
+                    thoughtful: [
+                        "Apakah cinta pertama itu nyata atau hanya nostalgia?",
+                        "Bagaimana cara kamu move on dari seseorang yang sangat kamu cintai?",
+                        "Apa yang akan kamu lakukan jika harus memilih antara family approval dan true love?",
+                        "Bagaimana cara kamu handle ketika masih ada feelings ke ex sementara udah sama orang lain?",
+                        "Apa yang kamu lakukan ketika realize kalau kamu ga bisa give what pasangan need?",
+                        "Bagaimana cara kamu cope dengan heartbreak yang devastating?",
+                        "Apa yang membuat kamu stay dalam relationship yang toxic?",
+                        "Bagaimana cara kamu forgive pasangan yang cheat?",
+                        "Apa yang kamu lakukan ketika love someone yang ga bisa kamu have?",
+                        "Bagaimana cara kamu handle ketika pasangan struggle dengan mental health?"
+                    ],
+                    curious: [
+                        "Apa yang akan kamu lakukan jika jatuh cinta dengan orang yang sudah taken?",
+                        "Bagaimana cara kamu handle ketika best friend dating your ex?",
+                        "Apa yang kamu lakukan ketika pasangan ultimatum kamu?",
+                        "Bagaimana cara kamu respond ketika pasangan propose tapi kamu belum ready?",
+                        "Apa yang kamu lakukan ketika discover pasangan punya secret yang big?",
+                        "Bagaimana cara kamu handle ketika pasangan ga mau commit?",
+                        "Apa yang kamu lakukan ketika realize kamu dan pasangan want different things?",
+                        "Bagaimana cara kamu cope ketika pasangan choose career over relationship?",
+                        "Apa yang kamu lakukan ketika pasangan constantly compare kamu dengan others?",
+                        "Bagaimana cara kamu handle ketika love triangle situation?"
+                    ],
+                    nostalgic: [
+                        "Kalau bisa kembali ke masa lalu, apa yang akan kamu ubah dari hubungan sebelumnya?",
+                        "Apa regret terbesar kamu dalam hal cinta?",
+                        "Siapa 'the one that got away' dan apa ceritanya?",
+                        "Apa mistake terbesar yang pernah kamu buat dalam relationship?",
+                        "Kalau bisa minta maaf ke ex, apa yang akan kamu katakan?",
+                        "Apa opportunity cinta yang kamu sia-siakan dan masih nyesel?",
+                        "Siapa yang pernah break your heart paling parah?",
+                        "Apa 'what if' scenario yang masih haunting kamu?",
+                        "Kalau bisa undo satu relationship decision, apa yang kamu pilih?",
+                        "Apa lesson painful yang kamu dapat dari love yang unrequited?"
+                    ],
+                    adventurous: [
+                        "Apakah kamu percaya dengan konsep soulmate atau cinta itu pilihan?",
+                        "Kalau harus memilih antara passionate love yang unstable atau comfortable love yang predictable?",
+                        "Apakah kamu rela sacrifice everything demi true love?",
+                        "Kalau bisa tau future relationship kamu, kamu mau tau atau prefer surprise?",
+                        "Apakah kamu believe in love at first sight atau itu cuma attraction?",
+                        "Kalau harus choose between love dan personal dreams, kamu pilih mana?",
+                        "Apakah kamu rela love someone yang punya terminal illness?",
+                        "Kalau bisa guarantee one thing dalam love life, apa yang kamu pilih?",
+                        "Apakah kamu percaya kalau some people destined to be alone?",
+                        "Kalau love require kamu jadi completely different person, kamu mau?"
+                    ]
+                }
+            },
+
+            career: {
+                easy: {
+                    happy: [
+                        "Apa hal yang paling kamu suka dari pekerjaan/sekolah kamu?",
+                        "Prestasi apa yang paling kamu banggain?",
+                        "Siapa mentor atau guru yang paling inspire kamu?",
+                        "Apa skill yang baru kamu master dan bikin kamu proud?",
+                        "Moment apa yang bikin kamu realize 'ini passion gue'?",
+                        "Apa project yang paling fun pernah kamu kerjakan?",
+                        "Siapa colleague atau teman sekelas yang paling supportive?",
+                        "Apa achievement kecil yang bikin kamu happy hari ini?",
+                        "Bagaimana perasaan kamu waktu pertama kali dapat salary/uang saku?",
+                        "Apa compliment terbaik yang pernah kamu terima soal work/study?"
+                    ],
+                    thoughtful: [
+                        "Apa yang memotivasi kamu untuk bekerja keras?",
+                        "Nilai apa yang paling penting dalam karir menurutmu?",
+                        "Bagaimana cara kamu define success?",
+                        "Apa legacy yang pengen kamu tinggalkan melalui work kamu?",
+                        "Bagaimana work/study membentuk karakter kamu?",
+                        "Apa purpose yang kamu cari dalam career?",
+                        "Bagaimana cara kamu stay motivated ketika facing challenges?",
+                        "Apa impact yang pengen kamu buat melalui profession kamu?",
+                        "Bagaimana cara kamu measure personal growth?",
+                        "Apa principle yang kamu pegang dalam professional life?"
+                    ],
+                    curious: [
+                        "Skill apa yang lagi kamu pelajari sekarang?",
+                        "Profesi apa yang paling kamu kagumi?",
+                        "Apa trend industry yang lagi kamu follow?",
+                        "Bagaimana cara kamu stay updated dengan perkembangan field kamu?",
+                        "Apa tools atau technology baru yang pengen kamu explore?",
+                        "Siapa professional yang jadi role model kamu?",
+                        "Apa course atau training yang pengen kamu ambil?",
+                        "Bagaimana cara kamu network dalam industry?",
+                        "Apa conference atau event yang pengen kamu attend?",
+                        "Skill apa yang menurutmu bakal penting di masa depan?"
+                    ],
+                    nostalgic: [
+                        "Apa cita-cita kamu waktu kecil dulu?",
+                        "Siapa role model karir kamu?",
+                        "Apa subject favorit kamu waktu sekolah?",
+                        "Cerita tentang teacher yang paling berpengaruh!",
+                        "Apa first job atau part-time pertama kamu?",
+                        "Moment apa yang bikin kamu interested sama field ini?",
+                        "Apa advice career terbaik yang pernah kamu dapat?",
+                        "Siapa yang pertama kali believe in potential kamu?",
+                        "Apa buku atau film yang inspire career choice kamu?",
+                        "Cerita tentang interview pertama yang memorable!"
+                    ],
+                    adventurous: [
+                        "Kalau uang bukan masalah, pekerjaan apa yang ingin kamu lakukan?",
+                        "Negara mana yang ingin kamu datangi untuk bekerja?",
+                        "Apa side hustle yang pengen kamu coba?",
+                        "Kalau bisa switch career completely, kamu mau jadi apa?",
+                        "Apa business idea yang pernah terlintas di pikiran kamu?",
+                        "Kalau bisa work from anywhere, kamu pilih dimana?",
+                        "Apa project passion yang pengen kamu pursue?",
+                        "Kalau bisa collaborate dengan company manapun, pilih mana?",
+                        "Apa innovation yang pengen kamu contribute ke dunia?",
+                        "Kalau bisa create your own job title, apa yang kamu pilih?"
+                    ]
+                },
+                medium: {
+                    happy: [
+                        "Apa definisi sukses menurutmu?",
+                        "Bagaimana cara kamu celebrate professional milestones?",
+                        "Apa yang bikin kamu excited bangun pagi buat work/study?",
+                        "Siapa yang paling support journey career kamu?",
+                        "Apa positive change yang kamu buat di workplace/school?",
+                        "Bagaimana cara kamu contribute ke team atau community?",
+                        "Apa feedback positif yang paling meaningful buat kamu?",
+                        "Bagaimana cara kamu help others dalam professional setting?",
+                        "Apa tradition atau culture di workplace/school yang kamu suka?",
+                        "Moment apa yang bikin kamu feel valued professionally?"
+                    ],
+                    thoughtful: [
+                        "Bagaimana cara kamu menyeimbangkan work-life balance?",
+                        "Apa yang lebih penting: passion atau financial stability?",
+                        "Bagaimana cara kamu handle professional disappointment?",
+                        "Apa sacrifice yang rela kamu buat demi career goals?",
+                        "Bagaimana cara kamu maintain integrity dalam competitive environment?",
+                        "Apa yang kamu lakukan ketika passion dan reality ga match?",
+                        "Bagaimana cara kamu deal dengan imposter syndrome?",
+                        "Apa role money dalam career satisfaction menurutmu?",
+                        "Bagaimana cara kamu stay authentic dalam professional world?",
+                        "Apa yang kamu prioritaskan: growth atau stability?"
+                    ],
+                    curious: [
+                        "Apa tantangan terbesar di bidang yang kamu tekuni?",
+                        "Bagaimana cara kamu mengatasi burnout?",
+                        "Apa skill yang paling underrated tapi important?",
+                        "Bagaimana cara kamu adapt dengan perubahan industry?",
+                        "Apa mistake yang paling banyak orang buat di field kamu?",
+                        "Bagaimana cara kamu build personal brand?",
+                        "Apa yang kamu wish kamu tau sebelum start career ini?",
+                        "Bagaimana cara kamu handle difficult colleagues atau clients?",
+                        "Apa strategy kamu buat continuous learning?",
+                        "Bagaimana cara kamu prepare untuk future of work?"
+                    ],
+                    nostalgic: [
+                        "Kapan pertama kali kamu merasa 'ini passion gue'?",
+                        "Apa nasihat karir terbaik yang pernah kamu terima?",
+                        "Siapa mentor yang paling berpengaruh dalam journey kamu?",
+                        "Apa turning point terbesar dalam career path kamu?",
+                        "Cerita tentang first big break atau opportunity!",
+                        "Apa lesson terbesar yang kamu dapat dari failure?",
+                        "Siapa yang paling believe in kamu ketika others doubt?",
+                        "Apa moment yang bikin kamu realize kamu di right path?",
+                        "Cerita tentang project yang challenging tapi rewarding!",
+                        "Apa tradition atau value dari family yang influence career choice?"
+                    ],
+                    adventurous: [
+                        "Kalau bisa memulai startup, produk apa yang akan kamu buat?",
+                        "Apa impian bisnis tergila yang pernah kamu pikirkan?",
+                        "Kalau bisa work dengan any team di dunia, team mana yang dipilih?",
+                        "Apa industry yang pengen kamu disrupt?",
+                        "Kalau bisa solve one problem di dunia through work, apa yang dipilih?",
+                        "Apa unconventional career path yang menarik buat kamu?",
+                        "Kalau bisa create course atau workshop, topik apa yang dipilih?",
+                        "Apa social enterprise yang pengen kamu start?",
+                        "Kalau bisa work in any era, kapan yang kamu pilih?",
+                        "Apa legacy professional yang pengen kamu tinggalkan?"
+                    ]
+                },
+                hard: {
+                    thoughtful: [
+                        "Apakah kamu rela mengorbankan hubungan personal demi karir? Kenapa?",
+                        "Bagaimana cara kamu menghadapi kegagalan besar dalam karir?",
+                        "Apa yang akan kamu lakukan jika discover passion kamu ga bisa sustain financially?",
+                        "Bagaimana cara kamu handle ketika stuck di job yang toxic tapi butuh money?",
+                        "Apa yang kamu lakukan ketika realize kamu di wrong career path?",
+                        "Bagaimana cara kamu cope dengan professional jealousy?",
+                        "Apa yang kamu lakukan ketika values kamu conflict dengan company values?",
+                        "Bagaimana cara kamu handle ageism atau discrimination di workplace?",
+                        "Apa yang kamu lakukan ketika mentor atau role model disappoint kamu?",
+                        "Bagaimana cara kamu rebuild career setelah major setback?"
+                    ],
+                    curious: [
+                        "Apa yang akan kamu lakukan jika harus memilih antara integritas dan kesempatan emas?",
+                        "Bagaimana cara kamu handle ketika junior colleague outperform kamu?",
+                        "Apa yang kamu lakukan ketika boss atau teacher unfairly treat kamu?",
+                        "Bagaimana cara kamu respond ketika asked to do something unethical?",
+                        "Apa yang kamu lakukan ketika team credit kamu buat someone else's success?",
+                        "Bagaimana cara kamu handle ketika automation threaten your job?",
+                        "Apa yang kamu lakukan ketika realize kamu plateau dalam career?",
+                        "Bagaimana cara kamu cope dengan constant rejection?",
+                        "Apa yang kamu lakukan ketika industry kamu declining?",
+                        "Bagaimana cara kamu handle ketika work passion become just job?"
+                    ],
+                    nostalgic: [
+                        "Keputusan karir apa yang paling kamu sesali?",
+                        "Kalau bisa mengulang perjalanan karir, apa yang akan kamu ubah?",
+                        "Apa opportunity yang kamu sia-siakan dan masih nyesel?",
+                        "Siapa yang pernah underestimate kamu dan gimana perasaan kamu?",
+                        "Apa mistake terbesar yang pernah kamu buat professionally?",
+                        "Kalau bisa minta maaf ke someone yang kamu wrong professionally, siapa?",
+                        "Apa dream job yang kamu abandon dan masih wondering 'what if'?",
+                        "Siapa mentor yang disappoint kamu dan gimana impact-nya?",
+                        "Apa phase career yang paling dark dan gimana kamu survive?",
+                        "Kalau bisa give advice ke younger professional self, apa yang kamu bilang?"
+                    ],
+                    adventurous: [
+                        "Apakah kamu berani resign dari zona nyaman untuk mengejar mimpi yang belum pasti?",
+                        "Kalau harus choose between stable career dan revolutionary idea, pilih mana?",
+                        "Apakah kamu rela start from zero di age 40+ untuk pursue true passion?",
+                        "Kalau bisa guarantee success tapi harus sacrifice 10 years, kamu mau?",
+                        "Apakah kamu berani take huge financial risk untuk business venture?",
+                        "Kalau harus move to completely different country untuk dream job, kamu mau?",
+                        "Apakah kamu rela work for free untuk gain experience di dream company?",
+                        "Kalau bisa choose between being employee atau entrepreneur, pilih mana?",
+                        "Apakah kamu berani challenge industry standard yang udah established?",
+                        "Kalau success require kamu jadi completely different person professionally, kamu mau?"
+                    ]
+                }
+            },
+
+            lifestyle: {
+                easy: {
+                    happy: ["Apa kebiasaan baik yang baru kamu mulai?", "Aktivitas apa yang selalu bikin mood kamu bagus?"],
+                    thoughtful: ["Apa filosofi hidup yang kamu pegang?", "Bagaimana cara kamu mendefinisikan kebahagiaan?"],
+                    curious: ["Apa habit yang pengen kamu hilangkan?", "Tren lifestyle apa yang lagi kamu ikuti?"],
+                    nostalgic: ["Kebiasaan masa kecil apa yang masih kamu lakukan?", "Tradisi keluarga apa yang paling kamu sayangi?"],
+                    adventurous: ["Kalau bisa hidup di era yang berbeda, kamu pilih kapan?", "Lifestyle impian kamu 10 tahun ke depan seperti apa?"]
+                },
+                medium: {
+                    thoughtful: ["Bagaimana cara kamu mengatasi stress dan pressure hidup?", "Apa yang membuat hidup kamu bermakna?"],
+                    curious: ["Apa perubahan gaya hidup yang paling berpengaruh buat kamu?", "Bagaimana cara kamu menjaga kesehatan mental?"],
+                    nostalgic: ["Masa hidup mana yang paling ingin kamu ulang?", "Apa momen yang mengubah perspektif hidup kamu?"],
+                    adventurous: ["Kalau punya kesempatan hidup nomaden, kamu tertarik?", "Apa eksperimen gaya hidup yang ingin kamu coba?"]
+                },
+                hard: {
+                    thoughtful: ["Apa yang akan kamu lakukan jika tersisa 1 tahun untuk hidup?", "Bagaimana cara kamu menghadapi quarter/mid-life crisis?"],
+                    curious: ["Apakah mengejar kebahagiaan itu selfish?"],
+                    nostalgic: ["Kalau bisa memberikan nasihat ke diri kamu 5 tahun lalu, apa yang akan kamu katakan?"],
+                    adventurous: ["Apakah kamu berani mengubah hidup kamu 180 derajat untuk kebahagiaan?"]
+                }
+            },
+
+            entertainment: {
+                easy: {
+                    happy: ["Film apa yang bisa kamu tonton berulang-ulang?", "Lagu apa yang selalu bikin kamu semangat?"],
+                    thoughtful: ["Film atau buku apa yang mengubah cara pandang kamu?", "Karakter fiksi mana yang paling menginspirasi kamu?"],
+                    curious: ["Genre musik/film apa yang lagi kamu explore?", "Platform streaming mana yang paling worth it?"],
+                    nostalgic: ["Kartun masa kecil apa yang paling kamu kangen?", "Lagu apa yang selalu ngingetin kamu masa SMP/SMA?"],
+                    adventurous: ["Kalau bisa jadi karakter di film/game, kamu pilih siapa?", "Festival musik mana yang paling pengen kamu datangi?"]
+                },
+                medium: {
+                    thoughtful: ["Apa pesan tersirat dari film/buku favorit kamu?", "Bagaimana entertainment mempengaruhi mood dan produktivitas kamu?"],
+                    curious: ["Apa prediksi kamu tentang masa depan industri hiburan?", "Content creator mana yang paling kamu respect dan kenapa?"],
+                    nostalgic: ["Era musik/film mana yang menurutmu paling berpengaruh?", "Trend entertainment masa lalu mana yang kamu pengen comeback?"],
+                    adventurous: ["Kalau bisa kolaborasi dengan artis manapun, kamu pilih siapa?", "Konsep reality show apa yang pengen kamu buat?"]
+                },
+                hard: {
+                    thoughtful: ["Seberapa besar pengaruh media terhadap pembentukan identitas kamu?", "Apakah entertainment bisa jadi pelarian yang tidak sehat?"],
+                    curious: ["Bagaimana cara kamu filter content yang kamu konsumsi?"],
+                    nostalgic: ["Bagaimana perubahan selera entertainment kamu mencerminkan pertumbuhan personal?"],
+                    adventurous: ["Kalau bisa menciptakan sebuah universe fiksi, seperti apa ceritanya?"]
+                }
+            },
+
+            personal: {
+                easy: {
+                    happy: ["Apa hal tentang diri kamu yang paling kamu syukuri?", "Pencapaian personal apa yang paling kamu banggain tahun ini?"],
+                    thoughtful: ["Apa nilai-nilai yang paling penting dalam hidup kamu?", "Bagaimana cara kamu mengukur pertumbuhan diri?"],
+                    curious: ["Skill apa yang pengen banget kamu kuasai?", "Apa yang lagi kamu pelajari tentang diri kamu sendiri?"],
+                    nostalgic: ["Versi diri kamu yang mana yang paling kamu kangen?", "Pelajaran hidup apa yang paling berharga buat kamu?"],
+                    adventurous: ["Kalau bisa upgrade satu aspek dari diri kamu, apa yang kamu pilih?", "Tantangan personal apa yang pengen kamu taklukkan?"]
+                },
+                medium: {
+                    thoughtful: ["Bagaimana cara kamu mengatasi self-doubt dan insecurity?", "Apa yang membuat kamu merasa paling authentic?"],
+                    curious: ["Apa blind spot yang mungkin kamu punya tentang diri sendiri?", "Bagaimana cara kamu keluar dari comfort zone?"],
+                    nostalgic: ["Momen apa yang paling membentuk karakter kamu?", "Siapa yang paling berpengaruh dalam membentuk kepribadian kamu?"],
+                    adventurous: ["Kalau bisa menghabiskan setahun untuk fokus self-improvement, apa yang akan kamu lakukan?"]
+                },
+                hard: {
+                    thoughtful: ["Apa ketakutan terdalam yang masih kamu struggle untuk hadapi?", "Bagaimana cara kamu mendamaikan antara ekspektasi orang lain dengan keinginan pribadi?"],
+                    curious: ["Seberapa baik kamu mengenal diri sendiri, dan apa yang masih jadi misteri?"],
+                    nostalgic: ["Trauma atau pengalaman buruk apa yang justru membuat kamu jadi lebih kuat?"],
+                    adventurous: ["Kalau harus memilih antara menjadi versi ideal dari diri kamu atau tetap jadi diri sendiri yang imperfect, kamu pilih mana?"]
+                }
+            },
+
+            fun: {
+                easy: {
+                    happy: ["Tim Indomie atau tim Mie Sedaap?", "Kalau jadi hewan satu hari, kamu pilih jadi apa?"],
+                    curious: ["Apa benda paling random yang ada di tas/kamar kamu sekarang?", "Kalau punya kekuatan super, kamu pilih apa?"],
+                    nostalgic: ["Mainan masa kecil apa yang paling kamu sayangi?", "Camilan masa kecil apa yang sekarang susah dicari?"],
+                    adventurous: ["Kalau dunia jadi zombie apocalypse, strategy survival kamu apa?", "Kalau bisa teleportasi ke mana aja, destinasi pertama kamu kemana?"]
+                },
+                medium: {
+                    happy: ["Apa conspiracy theory yang menurutmu mungkin bener?"],
+                    curious: ["Kalau hidup kamu ada cheat code, kamu mau cheat apa?", "Apa urban legend yang masih kamu percayai?"],
+                    nostalgic: ["Trend masa lalu apa yang pengen comeback?", "Game jadul apa yang masih seru dimainkan?"],
+                    adventurous: ["Kalau bisa punya theme song seperti di film, lagu apa yang cocok buat hidup kamu?", "Kalau jadi superhero, nama dan kekuatan kamu apa?"]
+                },
+                hard: {
+                    thoughtful: ["Kalau alien exist dan mereka nanya tentang manusia, apa yang akan kamu jelasin?"],
+                    curious: ["Kalau kamu bisa tau jawaban dari satu misteri dunia, kamu pilih misteri apa?"],
+                    adventurous: ["Kalau bisa menciptakan satu rule universal yang harus diikuti semua orang, rule apa yang kamu buat?"]
+                }
+            }
+        };
+
+        // Game state
+        let currentFilters = {
+            category: 'all',
+            difficulty: 'all',
+            mood: 'all'
+        };
+        let questionHistory = [];
+        let currentQuestionIndex = -1;
+        let usedQuestions = new Set();
+
+        // Mood mappings
+        const moodMappings = {
+            all: { emoji: '🎲', text: 'Siap untuk pertanyaan seru?' },
+            happy: { emoji: '😄', text: 'Mood kamu lagi cerah nih!' },
+            thoughtful: { emoji: '🤔', text: 'Waktunya refleksi mendalam...' },
+            curious: { emoji: '🤓', text: 'Penasaran banget ya?' },
+            nostalgic: { emoji: '🥰', text: 'Mari bernostalgia...' },
+            adventurous: { emoji: '🚀', text: 'Siap bertualang!' }
+        };
+
+        // Category mappings
+        const categoryNames = {
+            all: 'Umum',
+            friendship: 'Pertemanan',
+            love: 'Cinta',
+            career: 'Karir',
+            lifestyle: 'Gaya Hidup',
+            entertainment: 'Hiburan',
+            personal: 'Pengembangan Diri',
+            fun: 'Fun & Random'
+        };
+
+        // Initialize app
+        function initializeApp() {
+            updateMoodIndicator();
+            updateStats();
+            setupEventListeners();
+            document.getElementById('questionText').classList.add('show');
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            document.getElementById('categorySelect').addEventListener('change', handleFilterChange);
+            document.getElementById('difficultySelect').addEventListener('change', handleFilterChange);
+            document.getElementById('moodSelect').addEventListener('change', handleFilterChange);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function (e) {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    if (!document.getElementById('newQuestionBtn').disabled) {
+                        getNewQuestion();
+                    }
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (!document.getElementById('prevBtn').disabled) {
+                        showPreviousQuestion();
+                    }
+                }
+            });
+        }
+
+        // Handle filter changes
+        function handleFilterChange() {
+            currentFilters.category = document.getElementById('categorySelect').value;
+            currentFilters.difficulty = document.getElementById('difficultySelect').value;
+            currentFilters.mood = document.getElementById('moodSelect').value;
+
+            updateMoodIndicator();
+            updateStats();
+        }
+
+        // Update mood indicator
+        function updateMoodIndicator() {
+            const mood = currentFilters.mood;
+            const moodData = moodMappings[mood];
+            document.getElementById('moodEmoji').textContent = moodData.emoji;
+            document.getElementById('moodText').textContent = moodData.text;
+        }
+
+        // Get filtered questions
+        function getFilteredQuestions() {
+            let allQuestions = [];
+
+            for (const [category, difficulties] of Object.entries(questionDatabase)) {
+                if (currentFilters.category !== 'all' && category !== currentFilters.category) continue;
+
+                for (const [difficulty, moods] of Object.entries(difficulties)) {
+                    if (currentFilters.difficulty !== 'all' && difficulty !== currentFilters.difficulty) continue;
+
+                    for (const [mood, questions] of Object.entries(moods)) {
+                        if (currentFilters.mood !== 'all' && mood !== currentFilters.mood) continue;
+
+                        questions.forEach(question => {
+                            allQuestions.push({
+                                text: question,
+                                category: category,
+                                difficulty: difficulty,
+                                mood: mood
+                            });
+                        });
+                    }
+                }
+            }
+
+            return allQuestions;
+        }
+
+        // Get new question
+        function getNewQuestion() {
+            const btn = document.getElementById('newQuestionBtn');
+            const questionText = document.getElementById('questionText');
+            const container = document.getElementById('questionContainer');
+
+            // Disable button
+            btn.disabled = true;
+            btn.innerHTML = '🔄 Loading...';
+
+            // Hide current question
+            questionText.classList.remove('show');
+            questionText.innerHTML = '<div class="loading">Mencari pertanyaan yang pas...</div>';
+
+            setTimeout(() => {
+                const filteredQuestions = getFilteredQuestions();
+
+                if (filteredQuestions.length === 0) {
+                    questionText.innerHTML = 'Tidak ada pertanyaan yang sesuai dengan filter yang dipilih. Coba ubah pengaturan!';
+                    questionText.classList.add('show');
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄 Pertanyaan Baru';
+                    return;
+                }
+
+                // Reset used questions if all have been seen
+                const availableQuestions = filteredQuestions.filter(q =>
+                    !usedQuestions.has(`${q.category}-${q.difficulty}-${q.mood}-${q.text}`)
+                );
+
+                const questionsToUse = availableQuestions.length > 0 ? availableQuestions : filteredQuestions;
+
+                if (availableQuestions.length === 0) {
+                    usedQuestions.clear();
+                }
+
+                // Pick random question
+                const randomQuestion = questionsToUse[Math.floor(Math.random() * questionsToUse.length)];
+                const questionKey = `${randomQuestion.category}-${randomQuestion.difficulty}-${randomQuestion.mood}-${randomQuestion.text}`;
+
+                usedQuestions.add(questionKey);
+                questionHistory.push(randomQuestion);
+                currentQuestionIndex = questionHistory.length - 1;
+
+                // Update UI
+                displayQuestion(randomQuestion);
+                updateStats();
+
+                // Add pulse effect
+                container.classList.add('pulse');
+                setTimeout(() => container.classList.remove('pulse'), 600);
+
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Pertanyaan Baru';
+                document.getElementById('prevBtn').disabled = questionHistory.length <= 1;
+
+            }, 800);
+        }
+
+        // Display question
+        function displayQuestion(questionData) {
+            const questionText = document.getElementById('questionText');
+            const categoryEl = document.getElementById('questionCategory');
+            const difficultyEl = document.getElementById('questionDifficulty');
+
+            // Set question text
+            questionText.textContent = questionData.text;
+            questionText.classList.add('show');
+
+            // Set category
+            categoryEl.textContent = categoryNames[questionData.category];
+
+            // Set difficulty
+            difficultyEl.className = `question-difficulty difficulty-${questionData.difficulty}`;
+            const difficultyTexts = {
+                easy: 'Mudah',
+                medium: 'Sedang',
+                hard: 'Sulit'
+            };
+            difficultyEl.textContent = difficultyTexts[questionData.difficulty];
+        }
+
+        // Show previous question
+        function showPreviousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                const questionData = questionHistory[currentQuestionIndex];
+
+                const questionText = document.getElementById('questionText');
+                questionText.classList.remove('show');
+
+                setTimeout(() => {
+                    displayQuestion(questionData);
+                }, 200);
+
+                document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            }
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('categorySelect').value = 'all';
+            document.getElementById('difficultySelect').value = 'all';
+            document.getElementById('moodSelect').value = 'all';
+
+            currentFilters = { category: 'all', difficulty: 'all', mood: 'all' };
+            usedQuestions.clear();
+
+            updateMoodIndicator();
+            updateStats();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const filteredQuestions = getFilteredQuestions();
+            const usedCount = Math.min(usedQuestions.size, filteredQuestions.length);
+
+            document.getElementById('totalQuestions').textContent = filteredQuestions.length;
+            document.getElementById('questionsSeen').textContent = usedCount;
+            document.getElementById('remainingQuestions').textContent = Math.max(0, filteredQuestions.length - usedCount);
+            document.getElementById('questionCounter').textContent = `${usedCount} / ${filteredQuestions.length}`;
+
+            // Mock streak (could be enhanced with localStorage)
+            document.getElementById('currentStreak').textContent = questionHistory.length;
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+
+</html>
